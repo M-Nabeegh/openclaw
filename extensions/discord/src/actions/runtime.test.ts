@@ -11,6 +11,7 @@ import { createDiscordLoopbackRest } from "../send.test-harness.js";
 import { discordMessageActions } from "../channel-actions.js";
 import { discordGuildActionRuntime, discordModerationActionRuntime } from "./runtime-deps.js";
 import { handleDiscordGuildAction } from "./runtime.guild.js";
+import { handleDiscordMessageAction } from "./handle-action.js";
 import { handleDiscordAction } from "./runtime.js";
 import { handleDiscordMessagingAction } from "./runtime.messaging.js";
 import { discordMessagingActionRuntime } from "./runtime.messaging.runtime.js";
@@ -2273,7 +2274,7 @@ describe("handleDiscordMessagingAction", () => {
     expect(sendMessageDiscord).not.toHaveBeenCalled();
   });
 
-  it("records an MCP-to-Discord loopback trace for stringified components", async () => {
+  it("records an MCP-to-Discord loopback trace through the action boundary", async () => {
     const components = {
       blocks: [{ type: "text", text: "Pick one" }],
     };
@@ -2297,16 +2298,15 @@ describe("handleDiscordMessagingAction", () => {
       await sendDiscordComponentMessageReal(to, spec, { ...options, rest: loopback.rest });
 
     try {
-      await handleMessagingAction(
-        "sendMessage",
-        {
+      await handleDiscordMessageAction({
+        action: "send",
+        params: {
           to: "channel:123",
-          content: "hello",
+          message: "hello",
           components: rawComponents,
         },
-        enableAllActions,
-        DISCORD_TEST_CFG,
-      );
+        cfg: DISCORD_TEST_CFG,
+      });
     } finally {
       discordMessagingActionRuntime.sendDiscordComponentMessage =
         originalSendDiscordComponentMessage;
