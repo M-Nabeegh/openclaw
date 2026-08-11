@@ -44,9 +44,9 @@ jobs:
           {
             echo "## Discord component proof"
             echo
-            echo "Tested commit: \\`$(git rev-parse HEAD)\\`"
+            echo "Tested commit: $(git rev-parse HEAD)"
             echo
             echo '```text'
-            rg '\\[discord components mock-rest proof\\]' "$proof_log"
+            grep -F '[discord components mock-rest proof]' "$proof_log"
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
