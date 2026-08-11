@@ -6,6 +6,9 @@ import type { DiscordActionConfig } from "openclaw/plugin-sdk/config-contracts";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { clearPresences, setPresence } from "../monitor/presence-cache.js";
 import { DiscordThreadInitialMessageError } from "../send.js";
+import { sendDiscordComponentMessage } from "../send.components.js";
+import { createDiscordLoopbackRest } from "../send.test-harness.js";
+import { discordMessageActions } from "../channel-actions.js";
 import { discordGuildActionRuntime, discordModerationActionRuntime } from "./runtime-deps.js";
 import { handleDiscordGuildAction } from "./runtime.guild.js";
 import { handleDiscordAction } from "./runtime.js";
@@ -2268,6 +2271,70 @@ describe("handleDiscordMessagingAction", () => {
       expect.any(Object),
     );
     expect(sendMessageDiscord).not.toHaveBeenCalled();
+  });
+
+  it("records an MCP-to-Discord loopback trace for stringified components", async () => {
+    const components = {
+      text: "Choose",
+      blocks: [{ type: "text", text: "Pick one" }],
+    };
+    const rawComponents = JSON.stringify(components);
+    const prepared = await discordMessageActions.prepareSendPayload?.({
+      ctx: {
+        channel: "discord",
+        action: "send",
+        cfg: DISCORD_TEST_CFG,
+        params: { components: rawComponents },
+      },
+      to: "channel:123",
+      payload: { text: "hello" },
+    });
+    expect(prepared?.channelData?.discord).toMatchObject({ components });
+
+    const loopback = await createDiscordLoopbackRest();
+    const originalSendDiscordComponentMessage =
+      discordMessagingActionRuntime.sendDiscordComponentMessage;
+    discordMessagingActionRuntime.sendDiscordComponentMessage = async (to, spec, options) =>
+      await sendDiscordComponentMessage(to, spec, { ...options, rest: loopback.rest });
+
+    try {
+      await handleMessagingAction(
+        "sendMessage",
+        {
+          to: "channel:123",
+          content: "hello",
+          components: rawComponents,
+        },
+        enableAllActions,
+        DISCORD_TEST_CFG,
+      );
+    } finally {
+      discordMessagingActionRuntime.sendDiscordComponentMessage =
+        originalSendDiscordComponentMessage;
+      await loopback.close();
+    }
+
+    const request = loopback.requests.find(
+      (candidate) => candidate.method === "POST" && candidate.path?.includes("/messages"),
+    );
+    expect(request).toBeDefined();
+    const body = JSON.parse(request?.body ?? "{}");
+    expect(body.components).toEqual([
+      { type: 10, content: "Pick one" },
+    ]);
+    expect(body.flags).toBeDefined();
+    console.log(
+      `[discord components mock-rest proof] ${JSON.stringify({
+        status: "pass",
+        input: "MCP components JSON string",
+        durablePayload: "components retained",
+        discordRequest: {
+          method: request?.method,
+          path: request?.path,
+          componentsV2: body.components,
+        },
+      })}`,
+    );
   });
 
   it("forwards the optional filename into sendMessageDiscord", async () => {
