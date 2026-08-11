@@ -2275,7 +2275,6 @@ describe("handleDiscordMessagingAction", () => {
 
   it("records an MCP-to-Discord loopback trace for stringified components", async () => {
     const components = {
-      text: "Choose",
       blocks: [{ type: "text", text: "Pick one" }],
     };
     const rawComponents = JSON.stringify(components);
