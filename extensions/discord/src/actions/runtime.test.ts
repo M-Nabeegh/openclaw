@@ -2246,6 +2246,30 @@ describe("handleDiscordMessagingAction", () => {
     expect(sendOptions.mediaLocalRoots).toEqual(["/tmp/agent-root"]);
   });
 
+  it("parses stringified component specs before component sends", async () => {
+    sendDiscordComponentMessage.mockClear();
+    sendMessageDiscord.mockClear();
+    const components = { text: "Choose", blocks: [{ type: "text", text: "Pick one" }] };
+
+    await handleMessagingAction(
+      "sendMessage",
+      {
+        to: "channel:123",
+        content: "hello",
+        components: JSON.stringify(components),
+      },
+      enableAllActions,
+      DISCORD_TEST_CFG,
+    );
+
+    expect(sendDiscordComponentMessage).toHaveBeenCalledWith(
+      "channel:123",
+      components,
+      expect.any(Object),
+    );
+    expect(sendMessageDiscord).not.toHaveBeenCalled();
+  });
+
   it("forwards the optional filename into sendMessageDiscord", async () => {
     sendMessageDiscord.mockClear();
     await handleMessagingAction(

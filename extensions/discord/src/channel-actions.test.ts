@@ -449,6 +449,30 @@ describe("discordMessageActions", () => {
     });
   });
 
+  it("parses stringified components before preparing channel data", async () => {
+    const components = {
+      text: "Choose",
+      blocks: [{ type: "actions", buttons: [{ label: "Yes", callbackData: "yes" }] }],
+    };
+    const prepared = await discordMessageActions.prepareSendPayload?.({
+      ctx: {
+        channel: "discord",
+        action: "send",
+        cfg: {} as OpenClawConfig,
+        params: {
+          components: JSON.stringify(components),
+        },
+      },
+      to: "channel:123",
+      payload: { text: "hello" },
+    });
+
+    expect(prepared).toEqual({
+      text: "hello",
+      channelData: { discord: { components } },
+    });
+  });
+
   it("prepares inbound event delivery metadata for durable core sends", async () => {
     const prepared = await discordMessageActions.prepareSendPayload?.({
       ctx: {

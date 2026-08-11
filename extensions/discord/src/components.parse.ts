@@ -21,6 +21,17 @@ import type {
 
 export const DISCORD_COMPONENT_ATTACHMENT_PREFIX = "attachment://";
 
+export function parseDiscordComponentParam(raw: unknown): unknown {
+  if (typeof raw !== "string") {
+    return raw;
+  }
+  try {
+    return JSON.parse(raw) as unknown;
+  } catch {
+    return raw;
+  }
+}
+
 type DiscordComponentSeparatorSpacing = "small" | "large" | 1 | 2;
 
 const BLOCK_ALIASES = new Map<string, DiscordComponentBlock["type"]>([

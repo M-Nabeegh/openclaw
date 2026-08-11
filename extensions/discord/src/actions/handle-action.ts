@@ -20,6 +20,7 @@ import {
   notifyDiscordActiveTurnThreadCreated,
   notifyDiscordActiveTurnThreadReplyDelivered,
 } from "../active-turn-thread-route.js";
+import { parseDiscordComponentParam } from "../components.js";
 import { discordInboundEventDelivery } from "../inbound-event-delivery.js";
 import {
   DISCORD_PRESENTATION_CAPABILITIES,
@@ -191,8 +192,9 @@ export async function handleDiscordMessageAction(
       readStringParam(params, "path", { trim: false }) ??
       readStringParam(params, "filePath", { trim: false });
     const requestedContent = readStringParam(params, "message", { allowEmpty: true });
+    const parsedComponents = parseDiscordComponentParam(params.components);
     const presentation =
-      params.components == null ? normalizeMessagePresentation(params.presentation) : undefined;
+      parsedComponents == null ? normalizeMessagePresentation(params.presentation) : undefined;
     const adaptedPresentation = presentation
       ? adaptMessagePresentationForChannel({
           presentation,
@@ -214,7 +216,7 @@ export async function handleDiscordMessageAction(
     );
     const rawComponents = presentationFellBack
       ? undefined
-      : (params.components ??
+      : (parsedComponents ??
         presentationComponents ??
         buildDiscordInteractiveComponents(normalizeLegacyInteractiveReply(params.interactive)));
     const hasComponents =

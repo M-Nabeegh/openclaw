@@ -852,6 +852,30 @@ describe("handleDiscordMessageAction", () => {
     });
   });
 
+  it("parses stringified components on sends", async () => {
+    const components = { blocks: [{ type: "text", text: "Pick one" }] };
+    const cfg = discordConfig();
+
+    await handleDiscordMessageAction({
+      action: "send",
+      params: {
+        message: "hello",
+        components: JSON.stringify(components),
+      },
+      cfg,
+      toolContext: {
+        currentChannelProvider: "discord",
+        currentChannelId: "channel:123",
+      },
+    });
+
+    expectDiscordActionCall({
+      payload: expect.objectContaining({ components }),
+      cfg,
+      options: defaultActionOptions(),
+    });
+  });
+
   it("downgrades chart-only presentations to Discord component text", async () => {
     const cfg = discordConfig();
 
