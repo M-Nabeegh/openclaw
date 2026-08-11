@@ -6,7 +6,7 @@ import type { DiscordActionConfig } from "openclaw/plugin-sdk/config-contracts";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { clearPresences, setPresence } from "../monitor/presence-cache.js";
 import { DiscordThreadInitialMessageError } from "../send.js";
-import { sendDiscordComponentMessage } from "../send.components.js";
+import { sendDiscordComponentMessage as sendDiscordComponentMessageReal } from "../send.components.js";
 import { createDiscordLoopbackRest } from "../send.test-harness.js";
 import { discordMessageActions } from "../channel-actions.js";
 import { discordGuildActionRuntime, discordModerationActionRuntime } from "./runtime-deps.js";
@@ -2294,7 +2294,7 @@ describe("handleDiscordMessagingAction", () => {
     const originalSendDiscordComponentMessage =
       discordMessagingActionRuntime.sendDiscordComponentMessage;
     discordMessagingActionRuntime.sendDiscordComponentMessage = async (to, spec, options) =>
-      await sendDiscordComponentMessage(to, spec, { ...options, rest: loopback.rest });
+      await sendDiscordComponentMessageReal(to, spec, { ...options, rest: loopback.rest });
 
     try {
       await handleMessagingAction(
