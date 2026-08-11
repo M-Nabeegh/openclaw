@@ -2318,7 +2318,15 @@ describe("handleDiscordMessagingAction", () => {
     );
     expect(request).toBeDefined();
     const body = JSON.parse(request?.body ?? "{}");
-    expect(body.components).toEqual([{ type: 10, content: "Pick one" }]);
+    expect(body.components).toEqual([
+      {
+        type: 17,
+        components: [
+          { type: 10, content: "hello" },
+          { type: 10, content: "Pick one" },
+        ],
+      },
+    ]);
     expect(body.flags).toBeDefined();
     console.log(
       `[discord components mock-rest proof] ${JSON.stringify({
