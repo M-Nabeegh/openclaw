@@ -35,7 +35,7 @@ jobs:
           set -o errexit -o nounset -o pipefail
           proof_log="$RUNNER_TEMP/discord-components-proof.log"
           node --import tsx scripts/run-vitest.mjs run \
-            --config test/vitest/vitest.unit.config.ts \
+            --config test/vitest/vitest.extension-discord.config.ts \
             extensions/discord/src/components-param.test.ts \
             extensions/discord/src/channel-actions.test.ts \
             extensions/discord/src/actions/handle-action.test.ts \
